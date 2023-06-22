@@ -12,18 +12,17 @@ app.use(express.json());
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
   if (!authorization) {
-    return res.status(401).res.send({ error: true, message: "unauthorize access!" });
-  } else {
-    // bearer token
-    const token = authorization.split(" ")[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-      if (err) {
-        return res.status(403).res.send({ error: true, message: "forbidden access!" });
-      }
-      req.decoded = decoded;
-      next();
-    });
+    return res.status(401).send({ error: true, message: "unauthorized access" });
   }
+  // bearer token
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ error: true, message: "unauthorized access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
 };
 
 // connection string
@@ -49,17 +48,11 @@ const run = async () => {
     /*====================
     jwt api
     ======================*/
-    // app.post("/jwt", (req, res) => {
-    //   const email = req.body;
-    //   const token = jwt.sign(
-    //     {
-    //       data: email,
-    //     },
-    //     process.env.ACCESS_TOKEN_SECRET,
-    //     { expiresIn: "1h" }
-    //   );
-    //   res.send({ token });
-    // });
+    app.post("/jwt", (req, res) => {
+      const email = req.body;
+      const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1h" });
+      res.send({ token });
+    });
 
     /*====================
     users related apis
@@ -114,15 +107,18 @@ const run = async () => {
     });
 
     // get some data based on login
-    app.get("/carts", async (req, res) => {
+    app.get("/carts", verifyJWT, async (req, res) => {
       const email = req.query.email;
+
       if (!email) {
         res.send([]);
       }
-      // const decodedEmail = req.decoded;
-      // if (email !== decodedEmail) {
-      //   return res.status(401).res.send({ error: true, message: "forbidden access!" });
-      // }
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ error: true, message: "forbidden access" });
+      }
+
       const query = { email: email };
       const result = await cartCollection.find(query).toArray();
       res.send(result);
