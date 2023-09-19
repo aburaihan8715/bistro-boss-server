@@ -54,10 +54,8 @@ const run = async () => {
       res.send({ token });
     });
 
-    /*====================
-    users related apis
-    ======================*/
-    // create user data
+    //  ==============user related api==========
+    // post or create user data
     app.post("/users", async (req, res) => {
       const userData = req.body;
       const query = { email: userData.email };
@@ -96,9 +94,7 @@ const run = async () => {
       res.send(result);
     });
 
-    /*====================
-    cart related apis
-    ======================*/
+    //  ==============cart related api==========
     // create cart data
     app.post("/carts", async (req, res) => {
       const cartData = req.body;
@@ -132,18 +128,14 @@ const run = async () => {
       res.send(result);
     });
 
-    /*====================
-    menu related apis
-    ======================*/
+    //  ==============menu related api==========
     // get all menu data
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
 
-    /*====================
-    reviews related apis
-    ======================*/
+    //  ==============reviews related api==========
     // get all review data
     app.get("/reviews", async (req, res) => {
       const result = await reviewCollection.find().toArray();
@@ -153,7 +145,6 @@ const run = async () => {
     // await client.close();
   }
 };
-
 run().catch((err) => {
   console.log(err.message);
 });
