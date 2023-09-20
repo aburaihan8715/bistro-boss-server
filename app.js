@@ -1,4 +1,5 @@
 const express = require("express");
+// import { express } from "express";
 const cors = require("cors");
 require("dotenv").config();
 const app = express();
@@ -9,6 +10,7 @@ var jwt = require("jsonwebtoken");
 app.use(cors());
 app.use(express.json());
 
+// verify jwt
 const verifyJWT = (req, res, next) => {
   const authorization = req.headers.authorization;
   if (!authorization) {
@@ -55,6 +57,15 @@ const run = async () => {
     });
 
     //  ==============user related api==========
+
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "admin") return res.status(403).send({ error: true, message: "forbidden access!!" });
+      next();
+    };
     // post or create user data
     app.post("/users", async (req, res) => {
       const userData = req.body;
@@ -68,7 +79,7 @@ const run = async () => {
     });
 
     // get all user data
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
@@ -92,6 +103,14 @@ const run = async () => {
       };
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
+    });
+
+    // get admin true or false
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      res.send({ admin: user?.role === "admin" });
     });
 
     //  ==============cart related api==========
@@ -156,6 +175,7 @@ app.get("/", (req, res) => {
 // route not found error
 app.use((req, res, next) => {
   res.json({ message: "route not found!" });
+  next();
 });
 
 // server error
@@ -163,6 +183,7 @@ app.use((err, req, res, next) => {
   res.send(err.message);
 });
 
+// export default app;
 module.exports = app;
 
 // ==========end============
